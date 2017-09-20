@@ -34,6 +34,9 @@ if __name__ == "__main__":
     lat_index = int(sys.argv[4])
     lng_index = int(sys.argv[5])
     nbdh_id = int(sys.argv[6])
+    useHeader = False
+    if len(sys.argv)>7:
+        useHeader = bool(int(sys.argv[7]))
 
     nbhds = get_nbhds(neighbourhood_filename)
     req_nbhd = [x for x in nbhds if x['id'] == nbdh_id]
@@ -45,6 +48,9 @@ if __name__ == "__main__":
 
     input = open(input_filename, 'r')
     output = open(output_filename, 'w')
+
+    if useHeader:
+        input.readline()
 
     for line in input:
         attrs = line.split(',')
