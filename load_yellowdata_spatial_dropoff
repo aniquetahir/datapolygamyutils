@@ -1,0 +1,20 @@
+axel -a https://s3.amazonaws.com/nyc-tlc/trip+data/yellow_tripdata_2016-01.csv
+tail -n +3 yellow_tripdata_2016-01.csv > yellowdata
+pypy3 datapolygamyutils/filternbhd.py ../../data/neighborhood.txt yellowdata yellowdata.filtered 6 5 137
+rm yellowdata
+mv yellowdata.filtered yellowdata
+head -n 1 yellow_tripdata_2016-01.csv > yellowdata.header
+echo 'NONE,NONE,NONE,NONE,NONE,NONE,NONE,NONE' > yellowdata.defaults
+pypy datechanger.py yellowdata newyellowdata
+rm yellowdata
+mv newyellowdata yellowdata
+awk -F ',' '{print $3","$4","$5","$10","$11","$16","$19","$20}' yellowdata > yellowdatastripped
+cat yellowdata.header | awk -F ',' 'BEGIN {RS="\r\n"}; {print $3","$4","$5","$10","$11","$16","$19",tip_percentage"}' > yellowdatastripped.header
+#awk -F ',' '{print $3","$4","$5","$6","$7","$16","$19",tip_percentage"}' yellowdata.header > yellowdatastripped.header
+rm yellowdata
+rm yellowdata.header
+mv yellowdatastripped yellowdata
+mv yellowdatastripped.header yellowdata.header
+rm yellow_tripdata_2016-01.csv
+hdfs dfs -put yellowdata* data/
+rm yellowdata*
