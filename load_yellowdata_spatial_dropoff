@@ -1,5 +1,6 @@
 axel -a https://s3.amazonaws.com/nyc-tlc/trip+data/yellow_tripdata_2016-01.csv
 tail -n +3 yellow_tripdata_2016-01.csv > yellowdata
+# Filter data from LGA Airport only
 pypy3 datapolygamyutils/filternbhd.py ../../data/neighborhood.txt yellowdata yellowdata.filtered 6 5 137
 rm yellowdata
 mv yellowdata.filtered yellowdata

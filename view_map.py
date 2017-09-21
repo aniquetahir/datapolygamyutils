@@ -65,7 +65,7 @@ def plot_regions(aggregate_data, steps):
         if steps == 1:
             ax = fig.add_subplot(111)
         else:
-            ax = fig.add_subplot(3, 2, time_step+1)
+            ax = fig.add_subplot(1, 2, time_step+1)
         ax.set_xlim(minx - 0.2 * w, maxx + 0.2 * w)
         ax.set_ylim(miny - 0.2 * h, maxy + 0.2 * h)
         ax.set_aspect(1)
@@ -105,15 +105,19 @@ def plot_regions(aggregate_data, steps):
         ax.add_collection(PatchCollection(patches, match_original=True))
         ax.set_xticks([])
         ax.set_yticks([])
-        plt.title("Pickup Locations January 2016")
+        if time_step==0:
+            plt.title('Pickup Locations(Observation)')
+        else:
+            plt.title("Dropoff Locations(Explanation)")
         # plt.tight_layout()
 
     positive_salient_patch = mpatches.Patch(color='#005ef7', label='Positive Zone')
     negative_salient_patch = mpatches.Patch(color='#e600f7', label='Negative Zone')
     insig_salient_patch = mpatches.Patch(color='#000000', label='Insignificant Zone')
+    observation_patch = mpatches.Patch(color='#ff0000')
 
-    fig.legend((positive_salient_patch, negative_salient_patch),
-               ('Tip Percentage <≈ %.2f' % (min_sig_avg*100), 'Tip Percentage >≈ %.2f' % (max_sig_avg*100)),
+    fig.legend((positive_salient_patch, negative_salient_patch, observation_patch),
+               ('Tip Percentage <≈ %.2f' % (min_sig_avg*100), 'Tip Percentage >≈ %.2f' % (max_sig_avg*100), 'Observation'),
                loc='lower right')
     plt.show()
 
@@ -171,10 +175,9 @@ if __name__ == "__main__":
     for aggregate in data_aggregates:
         step = np.floor( (aggregate['time']-start)/step_size )
         step = int(step)
-        if step == 5:
-            step = 4
-        if step == 31:
-            step = 30
+        if step == num_steps:
+            step = step-1
+
         aggregate['step'] = int(step)
         for d_index in data_index:
             if d_index['zone'] == aggregate['zone']:

@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import sys
 import numpy as np
+from datetime import datetime
 
 class DataPolygamy:
     def __init__(self, aggregates_filename, headers_filename, temporal_resolution, observation):
@@ -61,6 +62,7 @@ class DataPolygamy:
         plot_data = sorted(plot_data, key= lambda x: x['x'])
 
         num_columns = np.ceil(num_attrs/2)
+
 
         for i in range(num_attrs):
             ax = fig.add_subplot(num_columns, 2, i+1)
