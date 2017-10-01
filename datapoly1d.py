@@ -1,7 +1,8 @@
 import matplotlib.pyplot as plt
 import sys
 import numpy as np
-from datetime import datetime
+from io import StringIO
+from datetime import datetime, timedelta
 
 class DataPolygamy:
     def __init__(self, aggregates_filename, headers_filename, temporal_resolution, observation):
@@ -63,12 +64,35 @@ class DataPolygamy:
 
         num_columns = np.ceil(num_attrs/2)
 
-
         for i in range(num_attrs):
             ax = fig.add_subplot(num_columns, 2, i+1)
             x_axis = [x['x'] for x in plot_data]
             y_axis = [x['y'][i] for x in plot_data]
-            if i==self.observation_index:
+            maxval = max(y_axis)
+            minval = min(y_axis)
+            valdiff = maxval-minval
+
+            for j, val in enumerate(y_axis):
+                epoch = datetime.utcfromtimestamp(0)
+                date = epoch + timedelta(seconds=x_axis[j])
+                if date.day == 23:
+                    ax.annotate('blizzard/travel ban', xy=(x_axis[j], val), xytext=(x_axis[j], minval-valdiff*0.25),
+                                arrowprops=dict(arrowstyle="->",
+                                                connectionstyle="arc3"),)
+                if date.day == 4:
+                    ax.annotate('CN Market Crash\nFirearm Exc. Order', xy=(x_axis[j], val), xytext=(x_axis[j], minval-valdiff*0.25),
+                                arrowprops=dict(arrowstyle="->",
+                                                connectionstyle="arc3"), bbox=dict(fc='green'))
+                # elif date.day == 24:
+                #     ax.annotate('blizzard/travel ban end', xy=(x_axis[j], val),
+                #                xytext=(x_axis[j], minval - valdiff * 0.5),
+                #                arrowprops=dict(facecolor='black', shrink=0.05), )
+                if val>minval+((maxval-minval)*0.90) or val<minval+((maxval-minval)*0.10):
+                    # Get time
+
+                    # Print data
+                    print('%s\nDate:%s, Value:%.2f\n' % (self.headers[i], date.strftime('%x'), val))
+            if i == self.observation_index:
                 ax.plot(x_axis, y_axis, color='red')
             else:
                 ax.plot(x_axis, y_axis)
@@ -76,9 +100,12 @@ class DataPolygamy:
             ax.set_xticks([])
             ax.set_ylabel(self.headers[i])
         plt.tight_layout()
-        #plt.savefig('1d.svg', type='svg')
 
-        plt.show()
+        img_data = StringIO()
+
+        plt.savefig(img_data, transparent=True, format='svg')
+        #img_data.seek(0)
+        print(img_data.getvalue())
 
 if __name__ == '__main__':
     aggregates_filename = sys.argv[1]
