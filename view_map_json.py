@@ -4,15 +4,17 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from matplotlib.collections import PatchCollection
 # from mpl_toolkits.basemap import Basemap
-from shapely.geometry import Point, MultiPoint, MultiPolygon, Polygon
+#from shapely.geometry import Point, MultiPoint, MultiPolygon, Polygon
 from descartes import PolygonPatch
 import sys
+import json
 
-def get_nbhds():
+def get_nbhds(nf):
     nbhds = []
     n=2
-    nbhd_file = open('neighborhood.txt', 'r')
+    nbhd_file = open(nf, 'r')
     poly_id = nbhd_file.readline()
+
     while poly_id!='':
         poly_id = int(poly_id)
         polygons = []
@@ -26,15 +28,14 @@ def get_nbhds():
                 point_coords = [float(x) for x in nbhd_file.readline().split(' ')]
                 points.append((point_coords[0], point_coords[1]))
 
-            polygons.append(Polygon(points))
-        mp = MultiPolygon(polygons=polygons)
-        nbhds.append({'id': poly_id, 'shape': mp})
+            polygons.append(points)
+        nbhds.append({'id': poly_id, 'shape': polygons})
         poly_id = nbhd_file.readline()
 
     nbhd_file.close()
     return nbhds
 
-def plot_regions(aggregate_data, steps):
+def plot_regions(aggregate_data, steps, nf):
     data_min = float('inf')
     data_max = -float('inf')
     # Get value bounds
@@ -47,36 +48,24 @@ def plot_regions(aggregate_data, steps):
     data_diff = data_max - data_min
 
     # lower left minx miny , upper right maxx maxy
-    bounds = [-74.25, 40.5, -73.7, 40.9]
-    minx, miny, maxx, maxy = bounds
-    w, h = maxx - minx, maxy - miny
+    # bounds = [-74.25, 40.5, -73.7, 40.9]
+    # minx, miny, maxx, maxy = bounds
+    # w, h = maxx - minx, maxy - miny
 
     # Get a few Polygons
-    neighborhoods = get_nbhds()
+    neighborhoods = get_nbhds(nf)
 
-    fig = plt.figure()
-    w, h = maxx - minx, maxy - miny
+    # fig = plt.figure()
+    # w, h = maxx - minx, maxy - miny
 
     max_sig_avg = float('inf')
     min_sig_avg = -float('inf')
 
+    timeline = []
     for time_step in range(steps):
-        ax = None
-        if steps == 1:
-            ax = fig.add_subplot(111)
-        else:
-            ax = fig.add_subplot(1, 2, time_step+1)
-        ax.set_xlim(minx - 0.2 * w, maxx + 0.2 * w)
-        ax.set_ylim(miny - 0.2 * h, maxy + 0.2 * h)
-        ax.set_aspect(1)
-
+        patches=[]
         # filter data for time step
         filtered_data = [x for x in aggregate_data if x['step'] == time_step]
-
-        cm = plt.get_cmap('RdYlGn')
-        #num_colours = len(neighborhoods)
-
-        patches = []
         for zone in neighborhoods:
 
             # get tuple for this zone
@@ -86,40 +75,38 @@ def plot_regions(aggregate_data, steps):
                 this_zone = this_zone[0]
                 this_zone_value = this_zone['value']
                 this_zone_feature = this_zone['feature']
-                # color = cm(1. * zone['id'] / num_colours)
-                color = cm((this_zone_value - data_min)/data_diff)
 
                 if this_zone_feature == 4:
-                    edge_color = '#005ef7' #blue
                     if this_zone_value > min_sig_avg:
                         min_sig_avg = this_zone_value
                 elif this_zone_feature == 2:
-                    edge_color = '#e600f7' #violet
                     if this_zone_value < max_sig_avg:
                         max_sig_avg = this_zone_value
             if zone['id'] == 137:
                 edge_color = '#ff0000'
             for idx, poly in enumerate(zone['shape']):
-                patches.append(PolygonPatch(poly, fc=edge_color, ec=edge_color, lw=0.2, alpha=1., zorder=1))
+                patches.append({
+                    'id': zone['id'],
+                    'shape': poly,
+                    'feature': this_zone_feature,
+                    'value': this_zone_value
+                })
+        timeline.append({
+            'timestep': time_step,
+            'patches': patches
+        })
 
-        ax.add_collection(PatchCollection(patches, match_original=True))
-        ax.set_xticks([])
-        ax.set_yticks([])
-        if time_step==0:
-            plt.title('Pickup Locations(Observation)')
-        else:
-            plt.title("Dropoff Locations(Explanation)")
-        # plt.tight_layout()
+    data = {
+        'timeline': timeline,
+        'stats': {
+            'min': data_min,
+            'max': data_max,
+            'salient_min': min_sig_avg,
+            'salient_max': max_sig_avg
+        }
+    }
 
-    positive_salient_patch = mpatches.Patch(color='#005ef7', label='Positive Zone')
-    negative_salient_patch = mpatches.Patch(color='#e600f7', label='Negative Zone')
-    insig_salient_patch = mpatches.Patch(color='#000000', label='Insignificant Zone')
-    observation_patch = mpatches.Patch(color='#ff0000')
-
-    fig.legend((positive_salient_patch, negative_salient_patch, observation_patch),
-               ('Tip Percentage <≈ %.2f' % (min_sig_avg*100), 'Tip Percentage >≈ %.2f' % (max_sig_avg*100), 'Observation'),
-               loc='lower right')
-    plt.show()
+    print(json.dumps(data))
 
 
 if __name__ == "__main__":
@@ -128,6 +115,7 @@ if __name__ == "__main__":
     temporal_res = int(sys.argv[3])
     spatial_res = 3 # 3-nbhd, 6-zipcode
     attribute_index = int(sys.argv[4])
+    neighborhood_filename = sys.argv[5]
 
     # filter out desired data
     data_index = []
@@ -187,5 +175,5 @@ if __name__ == "__main__":
                 aggregate['step'] = step
 
     # Interpolation
-    plot_regions(data_aggregates, num_steps)
+    plot_regions(data_aggregates, num_steps, neighborhood_filename)
 

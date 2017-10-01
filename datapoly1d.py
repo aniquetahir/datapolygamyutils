@@ -1,11 +1,11 @@
 import matplotlib.pyplot as plt
 import sys
 import numpy as np
+from io import StringIO
 from datetime import datetime
 
 class DataPolygamy:
-    def __init__(self, aggregates_filename, headers_filename, temporal_resolution, observation):
-        self.observation_index = observation
+    def __init__(self, aggregates_filename, headers_filename, temporal_resolution):
         self.aggregates = []
         self.headers = []
         self.temporal_resolution = int(temporal_resolution)
@@ -63,27 +63,22 @@ class DataPolygamy:
 
         num_columns = np.ceil(num_attrs/2)
 
-
         for i in range(num_attrs):
             ax = fig.add_subplot(num_columns, 2, i+1)
             x_axis = [x['x'] for x in plot_data]
             y_axis = [x['y'][i] for x in plot_data]
-            if i==self.observation_index:
-                ax.plot(x_axis, y_axis, color='red')
-            else:
-                ax.plot(x_axis, y_axis)
+            ax.plot(x_axis, y_axis)
             ax.set_xlabel('time')
             ax.set_xticks([])
             ax.set_ylabel(self.headers[i])
         plt.tight_layout()
-        #plt.savefig('1d.svg', type='svg')
-
-        plt.show()
+        stringio = StringIO()
+        plt.savefig(stringio, transparent=True, format='svg')
+        print(stringio.getvalue())
 
 if __name__ == '__main__':
     aggregates_filename = sys.argv[1]
     headers_filename = sys.argv[2]
     temp_res = sys.argv[3]
-    observation_attribute = int(sys.argv[4])
-    dp = DataPolygamy(aggregates_filename, headers_filename, temp_res, observation_attribute)
+    dp = DataPolygamy(aggregates_filename, headers_filename, temp_res)
     dp.plot_attributes()
