@@ -2,11 +2,10 @@ import matplotlib.pyplot as plt
 import sys
 import numpy as np
 from io import StringIO
-from datetime import datetime, timedelta
+from datetime import datetime
 
 class DataPolygamy:
-    def __init__(self, aggregates_filename, headers_filename, temporal_resolution, observation):
-        self.observation_index = observation
+    def __init__(self, aggregates_filename, headers_filename, temporal_resolution):
         self.aggregates = []
         self.headers = []
         self.temporal_resolution = int(temporal_resolution)
@@ -68,49 +67,18 @@ class DataPolygamy:
             ax = fig.add_subplot(num_columns, 2, i+1)
             x_axis = [x['x'] for x in plot_data]
             y_axis = [x['y'][i] for x in plot_data]
-            maxval = max(y_axis)
-            minval = min(y_axis)
-            valdiff = maxval-minval
-
-            for j, val in enumerate(y_axis):
-                epoch = datetime.utcfromtimestamp(0)
-                date = epoch + timedelta(seconds=x_axis[j])
-                if date.day == 23:
-                    ax.annotate('blizzard/travel ban', xy=(x_axis[j], val), xytext=(x_axis[j], minval-valdiff*0.25),
-                                arrowprops=dict(arrowstyle="->",
-                                                connectionstyle="arc3"),)
-                if date.day == 4:
-                    ax.annotate('CN Market Crash\nFirearm Exc. Order', xy=(x_axis[j], val), xytext=(x_axis[j], minval-valdiff*0.25),
-                                arrowprops=dict(arrowstyle="->",
-                                                connectionstyle="arc3"), bbox=dict(fc='green'))
-                # elif date.day == 24:
-                #     ax.annotate('blizzard/travel ban end', xy=(x_axis[j], val),
-                #                xytext=(x_axis[j], minval - valdiff * 0.5),
-                #                arrowprops=dict(facecolor='black', shrink=0.05), )
-                if val>minval+((maxval-minval)*0.90) or val<minval+((maxval-minval)*0.10):
-                    # Get time
-
-                    # Print data
-                    print('%s\nDate:%s, Value:%.2f\n' % (self.headers[i], date.strftime('%x'), val))
-            if i == self.observation_index:
-                ax.plot(x_axis, y_axis, color='red')
-            else:
-                ax.plot(x_axis, y_axis)
+            ax.plot(x_axis, y_axis)
             ax.set_xlabel('time')
             ax.set_xticks([])
             ax.set_ylabel(self.headers[i])
         plt.tight_layout()
-
-        img_data = StringIO()
-
-        plt.savefig(img_data, transparent=True, format='svg')
-        #img_data.seek(0)
-        print(img_data.getvalue())
+        stringio = StringIO()
+        plt.savefig(stringio, transparent=True, format='svg')
+        print(stringio.getvalue())
 
 if __name__ == '__main__':
     aggregates_filename = sys.argv[1]
     headers_filename = sys.argv[2]
     temp_res = sys.argv[3]
-    observation_attribute = int(sys.argv[4])
-    dp = DataPolygamy(aggregates_filename, headers_filename, temp_res, observation_attribute)
+    dp = DataPolygamy(aggregates_filename, headers_filename, temp_res)
     dp.plot_attributes()
