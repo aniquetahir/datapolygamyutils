@@ -19,3 +19,9 @@ mv yellowdatastripped.header yellowdata.header
 rm yellow_tripdata_2016-01.csv
 hdfs dfs -put yellowdata* data/
 rm yellowdata*
+
+m="r3.2xlarge"
+n=1
+hadoop jar data-polygamy.jar edu.nyu.vida.data_polygamy.pre_processing.PreProcessing -m $m -n $n -dn yellowdata -dh yellowdata.header -dd yellowdata.defaults -t hour -s nbhd -cs points -i 0 3 4
+hadoop jar data-polygamy.jar edu.nyu.vida.data_polygamy.scalar_function_computation.Aggregation -m $m -n $n -g yellowdata 0 0
+hadoop jar data-polygamy.jar edu.nyu.vida.data_polygamy.feature_identification.IndexCreation -f -m $m -n $n -g yellowdata
