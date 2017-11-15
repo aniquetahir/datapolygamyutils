@@ -13,6 +13,7 @@ temporalindex=$5
 m="r3.2xlarge"
 n=1
 
+# TODO Add the ignore thingy
 # Filter data based on zone
 hadoop fs -cat data/$dataname > /tmp/spatialdata
 python3 $SCRIPTS_PATH/filternbhd.py $DATA_POLYGAMY/data/neighborhood.txt /tmp/spatialdata /tmp/spatialdata.filtered $latindex $lngindex $zoneid 1>&2
@@ -27,7 +28,6 @@ hadoop fs -put /tmp/spatialdata.filtered data/filtereddtata 1>&2
 hadoop fs -cp data/$dataname.defaults data/filtereddata.defaults 1>&2
 hadoop fs -cp data/$dataname.header data/filtereddata.header 1>&2
 
-# TODO Add filtered output to datasets
 
 # Preprocessing, Aggregation, Indexing
 hadoop jar $DATA_POLYGAMY_JAR edu.nyu.vida.data_polygamy.pre_processing.PreProcessing -m $m -n $n -dn filtereddata -dh filtereddata.header -dd filtereddata.defaults -t hour -s nbhd -cs points -i $temporalindex $lngindex $latindex 1>&2
