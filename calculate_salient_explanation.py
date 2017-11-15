@@ -2,7 +2,6 @@ import numpy as np
 import json
 import sys
 
-
 def load_data(filename, temporal_res, spatial_res):
     file = open(filename, 'r')
     data = []
@@ -19,12 +18,7 @@ def load_data(filename, temporal_res, spatial_res):
     return data
 
 
-if __name__ == "__main__":
-    data = []
-
-    observation_att_index = int(sys.argv[1])
-    index_filename = sys.argv[2]
-
+def top_explanations(observation_att_index, index_filename):
     temporal_res = 4
     spatial_res = 3
 
@@ -69,7 +63,7 @@ if __name__ == "__main__":
                 negative_correlated_features.append(explanation_feature)
 
         # Relationship strength
-        tau = (len(positive_correlated_features)-len(negative_correlated_features))/len(zones)
+        tau = (len(positive_correlated_features) - len(negative_correlated_features)) / len(zones)
         relationship_scores.append({
             'attribute': attribute,
             'score': tau,
@@ -83,8 +77,18 @@ if __name__ == "__main__":
     # Print top 5 explanation
     top_five = relationship_scores[:5]
 
+    return top_five
+
+
+
+if __name__ == "__main__":
+    data = []
+
+    observation_att_index = int(sys.argv[1])
+    index_filename = sys.argv[2]
+
+    top_five = top_explanations(observation_att_index, index_filename)
+
     encoder = json.JSONEncoder()
-
     json_results = encoder.encode(top_five)
-
     print(json_results)

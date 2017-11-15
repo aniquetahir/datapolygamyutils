@@ -1,1 +1,1 @@
-count,passengers,distance,tip,total,tip percentage
+count,passenger_count,trip_distance,tip_amount,total_amount,tip_percentage
