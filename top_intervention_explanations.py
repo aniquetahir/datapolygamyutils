@@ -2,22 +2,8 @@ import sys
 import os
 import json
 
-class Calculator:
-    def __init__(self):
-        self.top_explanations = []
 
-if __name__ == "__main__":
-    observation_index = int(sys.argv[1])
-    header_filename = sys.argv[2]
-    dataset_name = sys.argv[3]
-    zones = None
-    observation_type = "nonspatial"
-    if len(sys.argv) > 4:
-        zones = sys.argv[4:]
-        zones = [int(z) for z in zones]
-        observation_type = "spatial"
-
-    attributes = None
+def top_explanations(observation_index, header_filename, dataset_name, zones):
     header_file = open(header_filename, 'r')
 
     header_columns = header_file.readline()
@@ -54,14 +40,27 @@ if __name__ == "__main__":
 
     sorted_explanations = sorted(explanations, key=lambda x: x['observation_value'])
 
-    top_explanations = {
+    top_explanations_results = {
         'high': sorted_explanations[:5],
         'low': sorted_explanations[max(0, len(sorted_explanations)-5):]
     }
 
+    return top_explanations_results
+
+if __name__ == "__main__":
+    observation_index = int(sys.argv[1])
+    header_filename = sys.argv[2]
+    dataset_name = sys.argv[3]
+    zones = None
+    observation_type = "nonspatial"
+    if len(sys.argv) > 4:
+        zones = sys.argv[4:]
+        zones = [int(z) for z in zones]
+        observation_type = "spatial"
+
     encoder = json.JSONEncoder()
 
-    print(encoder.encode(top_explanations))
+    print(encoder.encode(top_explanations(observation_index, header_filename, dataset_name, zones)))
 
 
 
