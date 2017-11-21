@@ -3,10 +3,25 @@ import calculate_salient_explanation, \
     top_intervention_explanations, \
     top_heiint_explanations
 import subprocess
+import matplotlib.pyplot as plt
 
 attributes = []
 processor_home = '/home/anique/IdeaProjects/yellowtaxi'
 data_file = "yellowdata_pickup.csv"
+observation_att = 5
+
+def plot_explanations(data, ylabel, title):
+    fig, ax = plt.subplots()
+
+    xaxis = list(range(1, len(data)+1))
+    width = 0.75
+
+    rects = ax.bar(xaxis, data, width, color='b')
+    ax.set_ylabel(ylabel)
+    ax.set_xlabel("rank")
+    ax.set_title(title)
+    fig.savefig("evaluation/%s/%s.svg" % (ylabel, title))
+
 
 
 class Aggravation:
@@ -21,8 +36,11 @@ class Aggravation:
         :return: the degree of explanation by aggravation(intensity) for the provided input
         """
         # Create predicate
-        predicate = " or ".join(['zone=%i' % x for x in zones])
-        predicate = "(%s)" % predicate
+        predicate = ",".join([str(x) for x in zones])
+        if predicate is '':
+            predicate = '1==1'
+        else:
+            predicate = "zone in (%s)" % predicate
         if min:
             predicate = "%s and %s>%f" % (predicate, attribute, min)
 
@@ -56,8 +74,11 @@ class Intervention:
         :return: the degree of explanation by intervention(influence) for the provided input
         """
         # Create predicate
-        predicate = " or ".join(['zone=%i' % x for x in zones])
-        predicate = "(%s)" % predicate
+        predicate = ",".join([str(x) for x in zones])
+        if predicate is '':
+            predicate = '1==1'
+        else:
+            predicate = "zone in (%s)" % predicate
         if min:
             predicate = "%s and %s>%f" % (predicate, attribute, min)
 
@@ -85,23 +106,25 @@ def evaluate_salient_features():
     # Evaluate tip percentage
 
     # Get Top 5 explanations
-    observation_att = 5
     top_five = calculate_salient_explanation.top_explanations(observation_att, 'index/data')
     intensity = []
     influence = []
     observation = "avg(%s)" % attributes[observation_att]
     for explanation in top_five:
         if explanation['score'] > 0:
-            zones = map(lambda x: x['zone'], explanation['positive'])
+            zones = list(map(lambda x: x['zone'], explanation['positive']))
         else:
-            zones = map(lambda x: x['zone'], explanation['negative'])
+            zones = list(map(lambda x: x['zone'], explanation['negative']))
 
         attribute = attributes[explanation['attribute']]
 
-        intensity.append(Aggravation().judge(observation, attribute, zones, None, None))
-        influence.append(Intervention().judge(observation, attribute, zones, None, None))
+        intensity.append(Aggravation().judge(observation, attribute, list(zones), None, None))
+        influence.append(Intervention().judge(observation, attribute, list(zones), None, None))
 
     # TODO Draw Graph
+    method_name = "Salient Features"
+    plot_explanations(intensity, "intensity", "Top explanations for %s[%s]" % (observation, method_name))
+    plot_explanations(influence, "influence", "Top explanations for %s[%s]" % (observation, method_name))
     pass
 
 
@@ -109,14 +132,13 @@ def evaluate_aggravation():
     # Evaluate tip percentage
 
     # Get top 5 explanations
-    observation_att = 5
     intensity = []
     influence = []
     top_five = top_aggravation_explanations.top_explanations(observation_att, 'yellowdata.header',
                                                              'yellowdata_pickup.csv', None)
-    observation = attributes[observation_att]
+    observation = "avg(%s)" % attributes[observation_att]
 
-    for explanation in top_five:
+    for explanation in top_five['high']:
         agg_index = Aggravation().judge(observation,
                             explanation['attribute'],
                             [explanation['zone']],
@@ -132,6 +154,9 @@ def evaluate_aggravation():
         influence.append(int_index)
 
     # TODO plot graph
+    method_name = "Aggravation"
+    plot_explanations(intensity, "intensity", "Top explanations for %s[%s]" % (observation, method_name))
+    plot_explanations(influence, "influence", "Top explanations for %s[%s]" % (observation, method_name))
     pass
 
 
@@ -139,14 +164,13 @@ def evaluate_intervention():
     # Evaluate tip percentage
 
     # Get top 5 explanations
-    observation_att = 5
     intensity = []
     influence = []
     top_five = top_intervention_explanations.top_explanations(observation_att, 'yellowdata.header',
                                                              'yellowdata_pickup.csv', None)
-    observation = attributes[observation_att]
+    observation = "avg(%s)" % attributes[observation_att]
 
-    for explanation in top_five:
+    for explanation in top_five['high']:
         agg_index = Aggravation().judge(observation,
                             explanation['attribute'],
                             [explanation['zone']],
@@ -162,6 +186,9 @@ def evaluate_intervention():
         influence.append(int_index)
 
     # TODO plot graph
+    method_name = "Intervention"
+    plot_explanations(intensity, "intensity", "Top explanations for %s[%s]" % (observation, method_name))
+    plot_explanations(influence, "influence", "Top explanations for %s[%s]" % (observation, method_name))
     pass
 
 
@@ -169,14 +196,13 @@ def evaluate_heirarchical_intervention():
     # Evaluate tip percentage
 
     # Get top 5 explanations
-    observation_att = 5
     intensity = []
     influence = []
     top_five = top_heiint_explanations.top_explanations(observation_att, 'yellowdata.header',
                                                              'yellowdata_pickup.csv', None)
-    observation = attributes[observation_att]
+    observation = "avg(%s)" % attributes[observation_att]
 
-    for explanation in top_five:
+    for explanation in top_five['high']:
         agg_index = Aggravation().judge(observation,
                             explanation['attribute'],
                             explanation['zones'],
@@ -192,7 +218,68 @@ def evaluate_heirarchical_intervention():
         influence.append(int_index)
 
     # TODO plot graph
+    method_name = "Hierarchical Intervention"
+    plot_explanations(intensity, "intensity", "Top explanations for %s[%s]" % (observation, method_name))
+    plot_explanations(influence, "influence", "Top explanations for %s[%s]" % (observation, method_name))
     pass
+
+
+def evaluate_nonspatial_aggravation():
+    # Get top 5 explanations
+    intensity = []
+    influence = []
+    top_five = top_aggravation_explanations.top_nonspatial_explanations(observation_att, 'yellowdata.header',
+                                                             'yellowdata_pickup.csv')
+    observation = "avg(%s)" % attributes[observation_att]
+
+    for explanation in top_five['high']:
+        agg_index = Aggravation().judge(observation,
+                            explanation['attribute'],
+                            [],
+                            explanation['start'],
+                            explanation['end'])
+        intensity.append(agg_index)
+
+        int_index = Intervention().judge(observation,
+                            explanation['attribute'],
+                            [],
+                            explanation['start'],
+                            explanation['end'])
+        influence.append(int_index)
+
+    # TODO plot graph
+    method_name = "Non Spatial Aggravation"
+    plot_explanations(intensity, "intensity", "Top explanations for %s[%s]" % (observation, method_name))
+    plot_explanations(influence, "influence", "Top explanations for %s[%s]" % (observation, method_name))
+    pass
+
+
+def evaluate_nonspatial_intervention():
+    intensity = []
+    influence = []
+    top_five = top_intervention_explanations.top_nonspatial_explanations(observation_att, 'yellowdata.header',
+                                                             'yellowdata_pickup.csv')
+    observation = "avg(%s)" % attributes[observation_att]
+
+    for explanation in top_five['high']:
+        agg_index = Aggravation().judge(observation,
+                            explanation['attribute'],
+                            [],
+                            explanation['start'],
+                            explanation['end'])
+        intensity.append(agg_index)
+
+        int_index = Intervention().judge(observation,
+                            explanation['attribute'],
+                            [],
+                            explanation['start'],
+                            explanation['end'])
+        influence.append(int_index)
+
+    # TODO plot graph
+    method_name = "Non Spatial Intervention"
+    plot_explanations(intensity, "intensity", "Top explanations for %s[%s]" % (observation, method_name))
+    plot_explanations(influence, "influence", "Top explanations for %s[%s]" % (observation, method_name))
 
 
 if __name__ == "__main__":
@@ -203,8 +290,13 @@ if __name__ == "__main__":
     attributes = [x.strip() for x in headers_file.readline().split(',')]
     headers_file.close()
 
-    evaluate_salient_features()
-    evaluate_aggravation()
-    evaluate_intervention()
-    evaluate_heirarchical_intervention()
+    # Evaluation for non spatial explanations
+    evaluate_nonspatial_aggravation()
+    evaluate_nonspatial_intervention()
+
+    # Evaluation for spatial explanations
+    #evaluate_salient_features()
+    #evaluate_aggravation()
+    #evaluate_intervention()
+    #evaluate_heirarchical_intervention()
 
