@@ -19,7 +19,10 @@ class HierarchicalIntervention:
             if explanation_attribute == observation_attribute:
                 continue
 
-            results_file = open('results/heiint/%s/%s_%s' %
+            if explanation_attribute == 'count':
+                continue
+
+            results_file = open('results/heiint/nonspatial_spatial/%s/%s_%s.csv' %
                                 (results_filename, observation_attribute, explanation_attribute), 'r')
 
             # skip header
@@ -39,7 +42,7 @@ class HierarchicalIntervention:
 
         self.results = results
 
-    def top_explanation(self, level=-1):
+    def top_explanation(self, observation_value, level=-1):
         # TODO Get top explanation for given level(or all levels)
         filtered_explanations=self.results
         if level != -1:
@@ -47,7 +50,10 @@ class HierarchicalIntervention:
 
         top_explanation = sorted(filtered_explanations, key=lambda x:x['degree'])
         if len(top_explanation) > 0:
-            top_explanation = top_explanation[0]
+            if abs(top_explanation[0]['degree']-observation_value)>abs(top_explanation[-1]['degree']-observation_value):
+                top_explanation = top_explanation[0]
+            else:
+                top_explanation = top_explanation[-1]
         else:
             top_explanation = None
 
@@ -63,19 +69,19 @@ class HierarchicalIntervention:
         max_level = max([x['level'] for x in self.results])
 
         observation_value = execute_query('avg(%s)' % self.observation, '1=1')
-        max_observation_value = execute_query('max(%s)' % self.observation, '1=1')
-        min_observation_value = execute_query('min(%s)' % self.observation, '1=1')
+        #max_observation_value = execute_query('max(%s)' % self.observation, '1=1')
+        #min_observation_value = execute_query('min(%s)' % self.observation, '1=1')
 
-        observation_value_range = max_observation_value - min_observation_value
+        #observation_value_range = max_observation_value - min_observation_value
+        observation_value_range = 1
 
         for level in range(min_level, max_level+1):
-            top_expl = self.top_explanation(level)
-            influence = Intervention().judge('avg(%s)' % self.observation, top_expl['attribute'], top_expl['cluster'],
-                                             top_expl['start'], top_expl['end'])
+            top_expl = self.top_explanation(observation_value, level)
+            influence = top_expl['degree']
             influence = abs(influence - observation_value)/observation_value_range
             y_axis_influence.append(influence)
 
-            itensity = Aggravation().judge('avg(%s)' % self.observation, top_expl['attribute'], top_expl['cluster'],
+            intensity = Aggravation().judge('avg(%s)' % self.observation, top_expl['attribute'], top_expl['cluster'],
                                              top_expl['start'], top_expl['end'])
             intensity = abs(intensity - observation_value)/observation_value_range
             y_axis_intensity.append(intensity)
@@ -83,15 +89,19 @@ class HierarchicalIntervention:
             x_axis.append(level)
 
         x_smooth = np.linspace(min_level, max_level, 300)
-        intensity_smooth = spline(x_axis, intensity, x_smooth)
-        influence_smooth = spline(x_axis, influence, x_smooth)
+        intensity_smooth = spline(x_axis, y_axis_intensity, x_smooth)
+        influence_smooth = spline(x_axis, y_axis_influence, x_smooth)
 
-        plt.plot(x_smooth, intensity_smooth, color='r')
-        plt.plot(x_smooth, influence_smooth, color='b')
+        fig, ax = plt.subplots()
 
-        plt.show()
+        ax.plot(x_smooth, intensity_smooth, color='r')
+        ax.plot(x_smooth, influence_smooth, color='b')
+        fig.savefig("hieint_%s.eps" % self.observation)
+
+        fig.show()
+
 
 
 if __name__ == "__main__":
-    hi = HierarchicalIntervention('yellowdata_pickup.csv', 'yellowdata.header', 5)
+    hi = HierarchicalIntervention('yellowdata_pickup.csv', 'yellowdata.header', 1)
     hi.plot_evaluation()
