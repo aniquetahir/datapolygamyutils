@@ -1,9 +1,9 @@
 axel -a https://s3.amazonaws.com/nyc-tlc/trip+data/yellow_tripdata_2016-01.csv
 tail -n +3 yellow_tripdata_2016-01.csv > yellowdata
 # Filter data from LGA Airport only
-pypy3 datapolygamyutils/filternbhd.py ../../data/neighborhood.txt yellowdata yellowdata.filtered 6 5 137
-rm yellowdata
-mv yellowdata.filtered yellowdata
+# pypy3 datapolygamyutils/filternbhd.py ../../data/neighborhood.txt yellowdata yellowdata.filtered 6 5 137
+#rm yellowdata
+#mv yellowdata.filtered yellowdata
 head -n 1 yellow_tripdata_2016-01.csv > yellowdata.header
 echo 'NONE,NONE,NONE,NONE,NONE,NONE,NONE,NONE' > yellowdata.defaults
 pypy datechanger.py yellowdata newyellowdata
@@ -22,8 +22,9 @@ mv yellowdatastripped.header yellowdata.header
 hdfs dfs -put yellowdata* data/
 rm yellowdata*
 
+m="whateva"
 m="r3.2xlarge"
-n=1
+n=2
 hadoop jar data-polygamy.jar edu.nyu.vida.data_polygamy.pre_processing.PreProcessing -m $m -n $n -dn yellowdata -dh yellowdata.header -dd yellowdata.defaults -t hour -s nbhd -cs points -i 0 3 4
 hadoop jar data-polygamy.jar edu.nyu.vida.data_polygamy.scalar_function_computation.Aggregation -m $m -n $n -g yellowdata 0 0
 hadoop jar data-polygamy.jar edu.nyu.vida.data_polygamy.feature_identification.IndexCreation -f -m $m -n $n -g yellowdata

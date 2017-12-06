@@ -4,11 +4,27 @@ import calculate_salient_explanation, \
     top_heiint_explanations
 import subprocess
 import matplotlib.pyplot as plt
+import numpy as np
 
 attributes = []
 processor_home = '/home/anique/IdeaProjects/yellowtaxi'
 data_file = "yellowdata_pickup.csv"
-observation_att = 5
+observation_att = 3
+
+
+def execute_query(observation, predicate):
+    query = subprocess.run([
+        'java',
+        '-cp',
+        '%s/target/yellowtaxi-1.0-SNAPSHOT-jar-with-dependencies.jar' % processor_home,
+        'edu.asu.query.Query',
+        "%s/data/%s" % (processor_home, data_file),
+        predicate,
+        observation
+    ], stdout=subprocess.PIPE)
+
+    return float(query.stdout.decode('utf-8'))
+
 
 def plot_explanations(data, ylabel, title):
     fig, ax = plt.subplots()
@@ -22,6 +38,31 @@ def plot_explanations(data, ylabel, title):
     ax.set_title(title)
     fig.savefig("evaluation/%s/%s.svg" % (ylabel, title))
 
+
+def plot_explanation_comparison(datum, ylabel, title, legend):
+    fig, ax = plt.subplots()
+
+    colors = ['r', 'g', 'b', 'y']
+
+    d_width = 0.9
+    width = d_width/len(datum)
+    xaxis = np.array(list(range(1, 5 + 1)))
+
+    rects_array = []
+    legend_label_array = []
+    for i, data in enumerate(datum):
+
+        rects = ax.bar(xaxis+i*width, data, width, color=colors[i])
+        rects_array.append(rects)
+        legend_label_array.append(legend[i])
+
+    ax.legend(rects_array, legend_label_array)
+    ax.set_ylabel(ylabel)
+    ax.set_xticks(xaxis + d_width / 2)
+    ax.set_xticklabels(('1', '2', '3', '4', '5'))
+    ax.set_xlabel("rank")
+    ax.set_title(title)
+    fig.savefig("evaluation/%s/%s.eps" % (ylabel, title))
 
 
 class Aggravation:
@@ -123,9 +164,14 @@ def evaluate_salient_features():
 
     # TODO Draw Graph
     method_name = "Salient Features"
-    plot_explanations(intensity, "intensity", "Top explanations for %s[%s]" % (observation, method_name))
-    plot_explanations(influence, "influence", "Top explanations for %s[%s]" % (observation, method_name))
-    pass
+    # plot_explanations(intensity, "intensity", "Top explanations for %s[%s]" % (observation, method_name))
+    # plot_explanations(influence, "influence", "Top explanations for %s[%s]" % (observation, method_name))
+    return {
+        'intensity': intensity,
+        'influence': influence,
+        'observation': observation,
+        'method': method_name
+    }
 
 
 def evaluate_aggravation():
@@ -155,9 +201,14 @@ def evaluate_aggravation():
 
     # TODO plot graph
     method_name = "Aggravation"
-    plot_explanations(intensity, "intensity", "Top explanations for %s[%s]" % (observation, method_name))
-    plot_explanations(influence, "influence", "Top explanations for %s[%s]" % (observation, method_name))
-    pass
+    # plot_explanations(intensity, "intensity", "Top explanations for %s[%s]" % (observation, method_name))
+    # plot_explanations(influence, "influence", "Top explanations for %s[%s]" % (observation, method_name))
+    return {
+        'intensity': intensity,
+        'influence': influence,
+        'observation': observation,
+        'method': method_name
+    }
 
 
 def evaluate_intervention():
@@ -187,9 +238,14 @@ def evaluate_intervention():
 
     # TODO plot graph
     method_name = "Intervention"
-    plot_explanations(intensity, "intensity", "Top explanations for %s[%s]" % (observation, method_name))
-    plot_explanations(influence, "influence", "Top explanations for %s[%s]" % (observation, method_name))
-    pass
+    # plot_explanations(intensity, "intensity", "Top explanations for %s[%s]" % (observation, method_name))
+    # plot_explanations(influence, "influence", "Top explanations for %s[%s]" % (observation, method_name))
+    return {
+        'intensity': intensity,
+        'influence': influence,
+        'observation': observation,
+        'method': method_name
+    }
 
 
 def evaluate_heirarchical_intervention():
@@ -219,9 +275,14 @@ def evaluate_heirarchical_intervention():
 
     # TODO plot graph
     method_name = "Hierarchical Intervention"
-    plot_explanations(intensity, "intensity", "Top explanations for %s[%s]" % (observation, method_name))
-    plot_explanations(influence, "influence", "Top explanations for %s[%s]" % (observation, method_name))
-    pass
+    # plot_explanations(intensity, "intensity", "Top explanations for %s[%s]" % (observation, method_name))
+    # plot_explanations(influence, "influence", "Top explanations for %s[%s]" % (observation, method_name))
+    return {
+        'intensity': intensity,
+        'influence': influence,
+        'observation': observation,
+        'method': method_name
+    }
 
 
 def evaluate_nonspatial_aggravation():
@@ -249,9 +310,14 @@ def evaluate_nonspatial_aggravation():
 
     # TODO plot graph
     method_name = "Non Spatial Aggravation"
-    plot_explanations(intensity, "intensity", "Top explanations for %s[%s]" % (observation, method_name))
-    plot_explanations(influence, "influence", "Top explanations for %s[%s]" % (observation, method_name))
-    pass
+    # plot_explanations(intensity, "intensity", "Top explanations for %s[%s]" % (observation, method_name))
+    # plot_explanations(influence, "influence", "Top explanations for %s[%s]" % (observation, method_name))
+    return {
+        'intensity': intensity,
+        'influence': influence,
+        'observation': observation,
+        'method': method_name
+    }
 
 
 def evaluate_nonspatial_intervention():
@@ -278,8 +344,16 @@ def evaluate_nonspatial_intervention():
 
     # TODO plot graph
     method_name = "Non Spatial Intervention"
-    plot_explanations(intensity, "intensity", "Top explanations for %s[%s]" % (observation, method_name))
-    plot_explanations(influence, "influence", "Top explanations for %s[%s]" % (observation, method_name))
+
+    # plot_explanations(intensity, "intensity", "Top explanations for %s[%s]" % (observation, method_name))
+    # plot_explanations(influence, "influence", "Top explanations for %s[%s]" % (observation, method_name))
+    return {
+        'intensity': intensity,
+        'influence': influence,
+        'observation': observation,
+        'method': method_name
+    }
+
 
 
 if __name__ == "__main__":
@@ -290,13 +364,31 @@ if __name__ == "__main__":
     attributes = [x.strip() for x in headers_file.readline().split(',')]
     headers_file.close()
 
+    # Get value of observation without filtering
+    observation_val = execute_query("avg(%s)" % attributes[observation_att], '1=1')
+
     # Evaluation for non spatial explanations
-    evaluate_nonspatial_aggravation()
-    evaluate_nonspatial_intervention()
+    # evaluate_nonspatial_aggravation()
+    # evaluate_nonspatial_intervention()
 
     # Evaluation for spatial explanations
-    #evaluate_salient_features()
-    #evaluate_aggravation()
-    #evaluate_intervention()
-    #evaluate_heirarchical_intervention()
+    agg = evaluate_aggravation()
+    int = evaluate_intervention()
+    hieint = evaluate_heirarchical_intervention()
+    salient = evaluate_salient_features()
+
+    datum = [agg, int, hieint, salient]
+
+    for d in datum:
+        d['influence'] = list(map(lambda x: abs(x-observation_val),d['influence']))
+        d['intensity'] = list(map(lambda x: abs(x - observation_val), d['influence']))
+
+    plot_explanation_comparison(list(map(lambda x: x['intensity'], datum)), 'intensity',
+                                "Top explanations for %s" % (datum[0]['observation']),
+                                list(map(lambda x: x['method'], datum)))
+
+    plot_explanation_comparison(list(map(lambda x: x['influence'], datum)), 'influence',
+                                "Top explanations for %s" % (datum[0]['observation']),
+                                list(map(lambda x: x['method'], datum)))
+
 
