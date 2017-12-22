@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from matplotlib.collections import PatchCollection
 # from mpl_toolkits.basemap import Basemap
-from shapely.geometry import Point, MultiPoint, MultiPolygon, Polygon
+# from shapely.geometry import Point, MultiPoint, MultiPolygon, Polygon
 from descartes import PolygonPatch
 import sys
 

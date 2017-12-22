@@ -11,6 +11,18 @@ processor_home = '/home/anique/IdeaProjects/yellowtaxi'
 data_file = "yellowdata_pickup.csv"
 observation_att = 3
 
+def execute_zone_count_query(spatial_attribute, predicate):
+    query = subprocess.run([
+        'java',
+        '-cp',
+        '%s/target/yellowtaxi-1.0-SNAPSHOT-jar-with-dependencies.jar' % processor_home,
+        'edu.asu.query.ZoneStatsQuery',
+        "%s/data/%s" % (processor_home, data_file),
+        predicate,
+        spatial_attribute
+    ], stdout=subprocess.PIPE)
+
+    return str(query.stdout.decode('utf-8'))
 
 def execute_query(observation, predicate):
     query = subprocess.run([

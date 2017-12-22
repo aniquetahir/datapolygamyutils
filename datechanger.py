@@ -12,6 +12,9 @@ if __name__ == "__main__":
     for line in yellowfile:
         fields = line.split(',')
         date = datetime.strptime(fields[1], '%Y-%m-%d %X')
+        #hour = date.hour
+        time_of_day = date.strftime('%A')
+
         seconds = int((date-epoch).total_seconds())
         fields[1] = str(seconds)
         date = datetime.strptime(fields[2], '%Y-%m-%d %X')
@@ -26,6 +29,8 @@ if __name__ == "__main__":
             tip_percentage = tip_amount/total_amount
 
         fields.append(str(tip_percentage))
+        fields.append(time_of_day)
+
         newyellowfile.write(','.join(fields))
         newyellowfile.write("\n")
 

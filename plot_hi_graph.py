@@ -42,6 +42,29 @@ class HierarchicalIntervention:
 
         self.results = results
 
+    def get_predicate(self,attribute, zones, min, max):
+        """
+        Creates a string SQL predicate
+        :param attribute: explanation attribute name
+        :param zones: explanation zones
+        :param min: explanation attribute lower bound
+        :param max: explanation attribute upper bound
+        :return:
+        """
+        predicate = ",".join([str(x) for x in zones])
+        if predicate is '':
+            predicate = '1==1'
+        else:
+            predicate = "zone in (%s)" % predicate
+        if min:
+            predicate = "%s and %s>%f" % (predicate, attribute, min)
+
+        if max:
+            predicate = "%s and %s<%f" % (predicate, attribute, max)
+
+
+        return predicate
+
     def top_explanation(self, observation_value, level=-1):
         # TODO Get top explanation for given level(or all levels)
         filtered_explanations=self.results
@@ -103,5 +126,5 @@ class HierarchicalIntervention:
 
 
 if __name__ == "__main__":
-    hi = HierarchicalIntervention('yellowdata_pickup.csv', 'yellowdata.header', 1)
+    hi = HierarchicalIntervention('yellowdata_pickup.csv', 'yellowdata.header', 5)
     hi.plot_evaluation()
